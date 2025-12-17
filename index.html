@@ -248,12 +248,11 @@
         q1El.classList.remove('active');
         resultEl.classList.add('active');
 
-        // 若點到被改成特殊圖片的那個選項：顯示「你是最特別的」
+        // 若點到被改成特殊圖片的那個選項：顯示「你是：貓辣妹！」
         if (specialKey && mbti === specialKey) {
           resultEmojiEl.innerHTML = '';
           const img = document.createElement('img');
           img.src = specialImageSrc;
-          img.alt = '特別選項';
           resultEmojiEl.appendChild(img);
           mbtiResultEl.innerText = 'MAORAMEI';
           animalDescEl.innerText = '你是：貓辣妹！';
@@ -276,9 +275,10 @@
         renderOptions();
       }
 
-      // 初始載入：先決定是否要有 ✨ 特別選項，再渲染
+      // 初始載入：第一題不啟用特殊圖片
       (function init() {
-        maybeActivateSpecialOption();
+        specialKey = null;
+        originalEmoji = null;
         renderOptions();
         restartBtn.addEventListener('click', restart);
       })();
