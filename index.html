@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MBTI 動物人格測驗</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #6c5ce7;
+        --bg-gradient: linear-gradient(135deg, #a8edea 0%, #fedfe3 100%);
+      }
+
+      body {
+        font-family: 'Noto Sans TC', sans-serif;
+        background: var(--bg-gradient);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 450px;
+        text-align: center;
+      }
+
+      .question-page {
+        display: none;
+      }
+      .active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+
+      h2 {
+        color: #2d3436;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+        line-height: 1.4;
+      }
+
+      .options-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-top: 10px;
+      }
+
+      .option-btn {
+        border: 2px solid #f0f0f0;
+        border-radius: 20px;
+        background: white;
+        cursor: pointer;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        font-size: 36px;
+        transition: all 0.2s;
+        line-height: 1;
+      }
+
+      .option-btn:hover {
+        border-color: var(--primary-color);
+        background: #f8f7ff;
+        transform: translateY(-2px);
+      }
+
+      .animal-emoji {
+        font-size: 80px;
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      .animal-emoji img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+      }
+
+      .option-btn img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+      }
+
+      .mbti-code {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--primary-color);
+        margin: 0;
+        letter-spacing: 2px;
+      }
+
+      .animal-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #2d3436;
+        margin: 10px 0 20px 0;
+      }
+
+      .restart-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 14px 40px;
+        border-radius: 50px;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 20px;
+        box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <!-- 單一題：只顯示 emoji 選項 -->
+      <div id="q1" class="question-page active">
+        <h2>你是哪一種動物？</h2>
+        <div id="options" class="options-grid"></div>
+      </div>
+
+      <!-- 結果頁 -->
+      <div id="result" class="question-page">
+        <span id="result-emoji" class="animal-emoji"></span>
+        <div id="mbti-result" class="mbti-code"></div>
+        <div id="animal-desc" class="animal-name"></div>
+        <button class="restart-btn" id="restartBtn">再測一次</button>
+      </div>
+    </div>
+
+    <script>
+      // 16 種 MBTI -> 動物名稱 + emoji
+      const mbtiData = {
+        INFP: { name: '溫柔小羊', emoji: '🐑' },
+        INFJ: { name: '神祕靈性貓', emoji: '🐈‍⬛' },
+        ENFP: { name: '快樂小狗', emoji: '🐶' },
+        ENFJ: { name: '溫暖鹿寶寶', emoji: '🦌' },
+        INTJ: { name: '冷靜黑豹', emoji: '🐆' },
+        INTP: { name: '思想家小倉鼠', emoji: '🐹' },
+        ENTP: { name: '古靈精怪狐狸', emoji: '🦊' },
+        ENTJ: { name: '霸氣獅子', emoji: '🦁' },
+        ISFP: { name: '才華兔兔', emoji: '🐰' },
+        ISFJ: { name: '守護者無尾熊', emoji: '🐨' },
+        ESFP: { name: '派對小豬', emoji: '🐷' },
+        ESFJ: { name: '友善貓熊', emoji: '🐼' },
+        ISTP: { name: '酷酷小浣熊', emoji: '🦝' },
+        ISTJ: { name: '認真小海狸', emoji: '🦫' },
+        ESTP: { name: '帥氣馬兒', emoji: '🐴' },
+        ESTJ: { name: '可靠牛牛', emoji: '🐮' },
+      };
+
+      const q1El = document.getElementById('q1');
+      const resultEl = document.getElementById('result');
+      const optionsEl = document.getElementById('options');
+
+      const resultEmojiEl = document.getElementById('result-emoji');
+      const mbtiResultEl = document.getElementById('mbti-result');
+      const animalDescEl = document.getElementById('animal-desc');
+
+      const restartBtn = document.getElementById('restartBtn');
+
+      const specialImageSrc = 'maoramei.png';
+
+      // 「特別選項」狀態：每次按再測一次，有 50% 機率啟用
+      let specialKey = null; // 被改成特殊圖片的那一個 MBTI key
+      let originalEmoji = null; // 方便需要的話可追蹤原 emoji（這版不必還原，因為每次都重建選項）
+
+      function getRandomKey(obj) {
+        const keys = Object.keys(obj);
+        return keys[Math.floor(Math.random() * keys.length)];
+      }
+
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function maybeActivateSpecialOption() {
+        // 50% 機率：將任一選項 emoji 改成特殊圖片
+        if (Math.random() < 0.5) {
+          specialKey = getRandomKey(mbtiData);
+          originalEmoji = mbtiData[specialKey].emoji;
+        } else {
+          specialKey = null;
+          originalEmoji = null;
+        }
+      }
+
+      function renderOptions() {
+        optionsEl.innerHTML = '';
+
+        const shuffledEntries = shuffleArray(Object.entries(mbtiData));
+        shuffledEntries.forEach(([mbti, data]) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'option-btn';
+
+          // 選項只顯示 emoji；若該 key 被指定為 special，顯示特殊圖片
+          if (mbti === specialKey) {
+            const img = document.createElement('img');
+            img.src = specialImageSrc;
+            img.alt = '特別選項';
+            btn.appendChild(img);
+          } else {
+            btn.textContent = data.emoji;
+          }
+
+          btn.addEventListener('click', () => selectAnimal(mbti));
+          optionsEl.appendChild(btn);
+        });
+      }
+
+      function selectAnimal(mbti) {
+        const data = mbtiData[mbti];
+
+        // 切頁
+        q1El.classList.remove('active');
+        resultEl.classList.add('active');
+
+        // 若點到被改成特殊圖片的那個選項：顯示「你是最特別的」
+        if (specialKey && mbti === specialKey) {
+          resultEmojiEl.innerHTML = '';
+          const img = document.createElement('img');
+          img.src = specialImageSrc;
+          img.alt = '特別選項';
+          resultEmojiEl.appendChild(img);
+          mbtiResultEl.innerText = 'MAORAMEI';
+          animalDescEl.innerText = '你是：貓辣妹！';
+          return;
+        }
+
+        // 一般結果
+        resultEmojiEl.innerText = data.emoji;
+        mbtiResultEl.innerText = mbti;
+        animalDescEl.innerText = `你的動物靈魂是：${data.name}`;
+      }
+
+      function restart() {
+        // 回到第一題
+        resultEl.classList.remove('active');
+        q1El.classList.add('active');
+
+        // 觸發 50% 機率特殊事件，然後重畫 16 個 emoji 選項
+        maybeActivateSpecialOption();
+        renderOptions();
+      }
+
+      // 初始載入：先決定是否要有 ✨ 特別選項，再渲染
+      (function init() {
+        maybeActivateSpecialOption();
+        renderOptions();
+        restartBtn.addEventListener('click', restart);
+      })();
+    </script>
+  </body>
+</html>
